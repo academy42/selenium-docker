@@ -7,5 +7,8 @@ class Config(BaseSettings):
     HUB_HOST: str
     """Хост для селениума"""
 
+    PROXY: str
+    """Прокси для парсера"""
+
 
 settings = Config()
