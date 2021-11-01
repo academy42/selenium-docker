@@ -1,73 +1,10 @@
-import os
-import zipfile
+import time
 
-from selenium import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.common.proxy import Proxy
+from seleniumwire import webdriver
 
 from config import settings
-
-PROXY_HOST = "dc3.ibaldr.ru"  # rotating proxy
-PROXY_PORT = 8120
-PROXY_USER = "63eqtpf95"
-PROXY_PASS = "e92vhr2j5y"
-
-manifest_json = """
-{
-    "version": "1.0.0",
-    "manifest_version": 2,
-    "name": "Chrome Proxy",
-    "permissions": [
-        "proxy",
-        "tabs",
-        "unlimitedStorage",
-        "storage",
-        "<all_urls>",
-        "webRequest",
-        "webRequestBlocking"
-    ],
-    "background": {
-        "scripts": ["background.js"]
-    },
-    "minimum_chrome_version":"22.0.0"
-}
-"""
-
-background_js = """
-var config = {
-        mode: "fixed_servers",
-        rules: {
-          singleProxy: {
-            scheme: "http",
-            host: "%s",
-            port: parseInt(%s)
-          },
-          bypassList: ["localhost"]
-        }
-      };
-
-chrome.proxy.settings.set({value: config, scope: "regular"}, function() {});
-
-function callbackFn(details) {
-    return {
-        authCredentials: {
-            username: "%s",
-            password: "%s"
-        }
-    };
-}
-
-chrome.webRequest.onAuthRequired.addListener(
-            callbackFn,
-            {urls: ["<all_urls>"]},
-            ['blocking']
-);
-""" % (
-    PROXY_HOST,
-    PROXY_PORT,
-    PROXY_USER,
-    PROXY_PASS,
-)
 
 
 class Application:
@@ -76,29 +13,26 @@ class Application:
     """Драйвер селениума"""
 
     def __init__(self):
+        time.sleep(5)
         dc = self.__setup_chrome_capabilities()
-        self.__driver = self.get_chromedriver(dc=dc, use_proxy=True)
 
-    @staticmethod
-    def get_chromedriver(dc: DesiredCapabilities, use_proxy=False, user_agent=None):
-        path = os.path.dirname(os.path.abspath(__file__))
-        chrome_options = webdriver.ChromeOptions()
-        if use_proxy:
-            pluginfile = "proxy_auth_plugin.zip"
+        option = webdriver.ChromeOptions()
+        option.add_argument("--proxy-server={}".format("app:3000"))
 
-            with zipfile.ZipFile(pluginfile, "w") as zp:
-                zp.writestr("manifest.json", manifest_json)
-                zp.writestr("background.js", background_js)
-            chrome_options.add_extension(pluginfile)
-        if user_agent:
-            chrome_options.add_argument("--user-agent=%s" % user_agent)
-        driver = webdriver.Remote(
+        self.__driver = webdriver.Remote(
             command_executor=f"http://{settings.HUB_HOST}:4444/wd/hub",
-            options=chrome_options,
+            options=option,
+            seleniumwire_options={
+                "auto_config": False,
+                "addr": "0.0.0.0",
+                "port": 3000,
+                "proxy": {
+                    "http": "http://63eqtpf95:e92vhr2j5y@dc3.ibaldr.ru:8120",
+                },
+            },
             desired_capabilities=dc,
             keep_alive=True,
         )
-        return driver
 
     @staticmethod
     def __setup_browser_proxy() -> Proxy:

@@ -7,8 +7,9 @@ license = "MIT"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-selenium = "^3.141.0"
 pydantic = "^1.8.2"
+selenium-wire = "^4.5.4"
+packaging = "^21.2"
 
 [tool.poetry.dev-dependencies]
 
