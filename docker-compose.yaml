@@ -16,11 +16,18 @@ services:
     depends_on:
       - selenium-hub
     environment:
+      - JAVA_OPTS=-Dwebdriver.chrome.whitelistedIps=
       - HUB_HOST=selenium-hub
-      - HUB_PORT=4444
-#      - NODE_MAX_INSTANCES=10
-#      - NODE_MAX_SESSION=10
+      - NODE_MAX_INSTANCES=20
+      - NODE_MAX_SESSION=20
 
+  app:
+    build: .
+    depends_on:
+      - selenium-hub
+      - chrome
+    env_file:
+      - .env-sample
 
 #################################################################
 ########                                                 ########
